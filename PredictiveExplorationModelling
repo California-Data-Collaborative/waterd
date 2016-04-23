@@ -1,0 +1,47 @@
+library(gdata)
+library(ggplot2)
+library(xts)
+library(forecast)
+library(nlme)
+library(INLA)
+# importing data
+df = read.xls("~/Desktop/DataKind/data/MNWD_RW_Production_and_Consumption_Time_Series.csv.xlsx",header=T)
+df$Date = as.Date(df$Date)
+df = df[!duplicated(df,by='Date'),]
+df$Produced.from.JRTP..mg.[df$Produced.from.JRTP..mg.==0]=NA
+df$Produced.from.Plant.3A..mg.[df$Produced.from.Plant.3A..mg.==0]=NA
+df$Produced.from.SCWD..mg.[df$Produced.from.SCWD..mg.==0]=NA
+df$Total.Produced..mg.[df$Total.Produced..mg.==0]=NA
+df$Beginning.Operating.Reservoir.Storage..mg[df$Beginning.Operating.Reservoir.Storage..mg==0]=NA
+df$Ending.Operating.Reservoir.Storage..mg.[df$Ending.Operating.Reservoir.Storage..mg.==0]=NA
+amount=ts(df$Amount.Delivered..mg.)
+plot(df$Date,amount)
+# the following is to visualize auto dependence
+lag.plot(amount,lag=12,do.lines=F)
+# Autocorrelation
+acf(amount)$acf
+# patial autocorrelation
+pacf(amount)
+tsdisplay(amount)
+mod = HoltWinters(amount,beta=FALSE,gamma=FALSE)
+# additive seasonality, makes sense?
+mod$seasonal
+plot(mod$fitted)
+plot(mod)
+mod2 = forecast.HoltWinters(mod,h=4)
+plot.forecast(mod2)
+accuracy(mod2)
+# there exists serial correlation
+Box.test(mod2$residuals,lag=10,type="Ljung-Box")
+mod.hw = HoltWinters(amount,seasonals="additive")
+mod1 = arima(amount)
+forecast1 = forecast(mod1,h=10,order=c(2,0,0))
+plot.forecast(forecast1)
+accuracy(mod1)
+#----------------------------------------------------
+#predictive modelling
+modser = lme(Amount.Delivered..mg.~Produced.from.JRTP..mg.+Produced.from.Plant.3A..mg.+Produced.from.SCWD..mg.
+             +Total.Produced..mg.+Beginning.Operating.Reservoir.Storage..mg.+Ending.Operating.Reservoir.Storage..mg.,random=~1|X,data=df,correlation = 
+               corExp(form=~Month|X,nugget=TRUE))
+formula1 = Amount.Delivered..mg.~ Produced.from.JRTP..mg.+Produced.from.Plant.3A..mg.+Produced.from.SCWD..mg.+Total.Produced..mg.+Beginning.Operating.Reservoir.Storage..mg.+Ending.Operating.Reservoir.Storage..mg.+f(Month,model="ar1")
+result101 = inla(formula1,family="poisson",data=df,verbose=TRUE,control.predictor = list(compute=TRUE))
