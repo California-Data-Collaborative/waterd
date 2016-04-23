@@ -1,0 +1,35 @@
+rm(list=ls())
+library(shiny)  
+ui = fluidPage(
+  tags$head(
+    tags$style(HTML("
+      @import url('//fonts.googleapis.com/css?family=Lobster|Cabin:400,700');
+      
+      h1 {
+        font-family: 'Lobster', cursive;
+        font-weight: 500;
+        line-height: 1.1;
+        color: #2E9AFE;
+        text-align:center;
+      }
+
+    "))
+  ),
+  headerPanel("MNWD Project"),
+  tags$img(src="https://storage.googleapis.com/instapage-thumbnails/4fabf3be/12934052/1456792766-2552300-222x177-MNWD-LogoStacked-PMS.png",width=100),
+  tags$img(src="http://blog.datasift.com/wp-content/uploads/2012/12/2708040823-5.png",width=100),
+  tabsetPanel(         
+    tabPanel(title = "Background"
+    ),
+    navbarMenu(title = "Analysis",
+               tabPanel(title = "Exploration Phase"),
+               tabPanel(title = "Predictive Modelling"),
+               tabPanel(title="Data Visualization")),
+    tabPanel(title="conclusion")       
+    ))
+   
+
+server = function(input,output){
+  
+}
+shinyApp(ui=ui,server=server)
