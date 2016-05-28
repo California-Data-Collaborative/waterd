@@ -1,0 +1,110 @@
+---
+title: "Estimate Daily Customer Level Usage and Usage Shifting"
+author: "Yu Zhou"
+date: "May 27, 2016"
+output: html_document
+---
+
+
+```{r, include=FALSE}
+library(ggplot2)
+library(reshape2)
+library(plyr)
+library(sqldf)
+library(forecast)
+library(zoo)
+rw_with_et <- read.csv("~/Desktop/DataKind/Data/rw_with_et.csv")
+ProductionConsumption <- read.csv("~/Desktop/DataKind/Data/ProductionConsumption.csv")
+```
+
+```{r, echo=FALSE, include=FALSE}
+#this is for ARIMA model
+ProductionConsumption$Date<-as.Date(ProductionConsumption$Date,"%m/%d/%y")
+acf(ProductionConsumption$AmountDelivered,type="partial")
+auto.arima(ProductionConsumption$AmountDelivered, stepwise=FALSE, approximation=FALSE,seasonal=TRUE)
+```
+
+
+From the production data set, I use the aggregated delivery amount in the past years to make a strong assumption about individual user's day to day water usage amount pattern. I assume that each individual follows the aggregated delivery amount pattern. I use local averages of 15 days to generate a linear estimate of individual user's day to day water usage amount pattern. To avoid much data manipulation due to date matching, I only focus on data from 2013. 
+
+
+```{r}
+temp<-rollmean(ProductionConsumption$AmountDelivered, 15)
+temp<-c(ProductionConsumption$AmountDelivered[1:7],temp,ProductionConsumption$AmountDelivered[4226:4232])
+ProductionConsumption$LocalAverage<-temp
+#ggplot()+ geom_line(data=ProductionConsumption, aes(x=Date, y=AmountDelivered, color="AmountDelivered"))+ #geom_line(data=ProductionConsumption, aes(x=Date, y=LocalAverage,color="LocalAverage")) 
+pc_2013<-sqldf("select * from ProductionConsumption where Year=2013 ")
+ggplot()+ geom_line(data=pc_2013, aes(x=Date, y=AmountDelivered, color="AmountDelivered"))+ geom_line(data=pc_2013, aes(x=Date, y=LocalAverage,color="LocalAverage")) +ggtitle("The 2013 Aggregated Water Usage Pattern")
+```
+
+
+From previous analysis, user id 64081 is identifie as the top offender. I want to construct a daily water usage for 64081. I know 64081's total montly water usage in 2013, now I construct 64081's daily water usage in 2013. 
+
+
+```{r}
+et_64081<-sqldf("select usage_ccf, usage_month as Month, usage_year from rw_with_et where cust_id_from_utility=64081 and usage_year=2013")
+pc_2013_LocalAverage<-sqldf("select LocalAverage,Month, Date from pc_2013")
+pc_2013_LocalAverage$index<-c(1:length(pc_2013_LocalAverage$LocalAverage))
+daily_use_64081<-sqldf("select * from pc_2013_LocalAverage left join et_64081 on et_64081.Month=pc_2013_LocalAverage.Month")
+daily_use_64081<-daily_use_64081[,-2]
+daily_use_64081<-sqldf("select * from daily_use_64081 order by usage_year, Month")
+MonthSum<-sqldf("select Month, sum(LocalAverage) as Sum from daily_use_64081 group by Month")
+daily_use_64081<-sqldf("select * from daily_use_64081 left join MonthSum on daily_use_64081.Month=MonthSum.Month")
+daily_use_64081$adjust<-(daily_use_64081$usage_ccf/daily_use_64081$Sum)
+daily_use_64081$LocalAverage<-daily_use_64081$LocalAverage*daily_use_64081$adjust
+daily_use_64081$ImagineOne<-daily_use_64081$LocalAverage*1.5
+daily_use_64081$ImagineTwo<-daily_use_64081$LocalAverage*2
+
+ggplot()+ geom_line(data=daily_use_64081, aes(x=Date, y=LocalAverage,color="Estimated Usage"))+ggtitle("64081's Estimated Daily Water Usage in 2013")
+```
+
+Because I assume all users follow the same pattern, therefore I can create estimated water usage patterns for other users. 
+
+```{r}
+ggplot()+ geom_line(data=daily_use_64081, aes(x=Date, y=LocalAverage,color="64081")) +geom_line(data=daily_use_64081, aes(x=Date, y=ImagineOne,color="A"))+geom_line(data=daily_use_64081, aes(x=Date, y=ImagineTwo,color="B"))+ggtitle("Estimated Daily Water Usage in 2013")
+```
+
+There are obvious cliffs at the begining/end of each month. Real individual usage lines should not have cliffs at the begining/end of each month. The next step is to experiment with usage shifting. The usage shifting is constrained within each month.
+
+
+**Usage Shifting**
+
+We combine 64081, ImagineOne and ImagineTwo into Total. Total is the toal water usage we want to control. Because of the seasonality of water usage, I think we can identify peak months and then find opportunities to manage demand. Here, with just eyeballing, I want to identify June, Augest and Octorber as peak months. 
+
+```{r}
+daily_use_64081$Total<-daily_use_64081$LocalAverage+daily_use_64081$ImagineOne+daily_use_64081$ImagineTwo
+ggplot()+ geom_line(data=daily_use_64081, aes(x=Date, y=LocalAverage,color="64081")) +geom_line(data=daily_use_64081, aes(x=Date, y=ImagineOne,color="A"))+geom_line(data=daily_use_64081, aes(x=Date, y=ImagineTwo,color="B"))+geom_line(data=daily_use_64081, aes(x=Date, y=Total,color="Total"))+ggtitle("Estimated Daily Water Usage in 2013")
+```
+
+Because our usage pattern are estimated, it is not valid to manage demand across months. In the next step, I will only focus on June. 
+
+```{r}
+daily_use_64081<-daily_use_64081[,-5]
+june_use<-sqldf("select * from daily_use_64081 where Month=6")
+ggplot()+ geom_line(data=june_use, aes(x=Date, y=LocalAverage,color="64081")) +geom_line(data=june_use, aes(x=Date, y=ImagineOne,color="A"))+geom_line(data=june_use, aes(x=Date, y=ImagineTwo,color="B"))+geom_line(data=june_use, aes(x=Date, y=Total,color="Total"))+ggtitle("Estimated Daily Water Usage in 2013 June")
+```
+
+
+An intuitive approach, find the highest peak, if a 3 day switch benefits, then switch, otherwise, exam the second highest peak. After a switch, calculate the total again. 
+
+```{r}
+june_use<-june_use[order(june_use$Date,decreasing =FALSE),]
+june_use$diff<-c(diff(june_use$Total,3),c(NA,NA,NA))
+for (i in 1:10){
+  if (june_use$diff[june_use$Total==sort(june_use$Total,TRUE)[i]]<0){
+    Date<-june_use$Date[june_use$Total==sort(june_use$Total,TRUE)[i]]
+    temp<-june_use$LocalAverage[june_use$Date==Date]
+    NewDate<-Date+3
+    june_use$LocalAverage[june_use$Date==Date]<-june_use$LocalAverage[june_use$Date==NewDate]
+    june_use$LocalAverage[june_use$Date==NewDate]<-temp
+    june_use$Total<-june_use$LocalAverage+june_use$ImagineOne+june_use$ImagineTwo
+    june_use$diff<-c(diff(june_use$Total,3),c(NA,NA,NA))
+  }    
+  print(Date)
+}
+
+ggplot()+ geom_line(data=june_use, aes(x=Date, y=LocalAverage,color="64081")) +geom_line(data=june_use, aes(x=Date, y=ImagineOne,color="A"))+geom_line(data=june_use, aes(x=Date, y=ImagineTwo,color="B"))+geom_line(data=june_use, aes(x=Date, y=Total,color="Total"))+ggtitle("Adjusted Daily Water Usage in 2013 June")
+
+```
+
+The peak is lower a little bit. 
