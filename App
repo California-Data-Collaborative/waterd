@@ -23,7 +23,7 @@ ui = fluidPage(
     ),
     navbarMenu(title = "Analysis",
                tabPanel(title = "Exploration Phase"),
-               tabPanel(title = "Predictive Modelling"),
+               tabPanel(title = "Predictive Modelling", dateInput("date")   ),
                tabPanel(title="Data Visualization")),
     tabPanel(title="conclusion")       
     ))
