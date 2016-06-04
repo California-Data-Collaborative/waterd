@@ -17,7 +17,7 @@ dir.create(file.path(MODEL_DIR))
 # input files
 PROD_CONS_TIME_SERIES_FILE <- file.path(DATA_DIR,'MNWD_RW_Production_and_Consumption_Time_Series.csv')
 
-# output files
+# model list specification
 MODEL_LIST <- list(tbats=list(modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rdata"),
                               days_per_step=1),
                    autoarima=list(modelfile=file.path(MODEL_DIR,"total_cons_autoarima.Rdata"),
@@ -25,10 +25,3 @@ MODEL_LIST <- list(tbats=list(modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rd
                    ets=list(modelfile=file.path(MODEL_DIR,"total_cons_ets.Rdata"),
                             days_per_step=30.25)
 )
-# TBATS_MODEL <- file.path(MODEL_DIR,"total_cons_tbats.Rdata")
-# AUTOARIMA_MODEL <- file.path(MODEL_DIR,"total_cons_autoarima.Rdata")
-# ETS_MODEL <- file.path(MODEL_DIR,"total_cons_ets.Rdata")
-
-
-# 
-TOTAL_FORECAST_MODEL <- 'tbats'
