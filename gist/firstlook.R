@@ -3,9 +3,9 @@ library(ggplot2)
 library(xts)
 library(forecast)
 
-df <- fread('MNWD_RW_Production_and_Consumption_Time_Series.csv')
+df <- fread('~/data/datakind_water/MNWD_RW_Production_and_Consumption_Time_Series.csv')
 
-setnames(df,gsub("[()]","",gsub(" ","_",colnames(df))))
+setnames(df,gsub("[-(\\+)]","",gsub(" ","_",colnames(df))))
 df$Date <- as.Date(df$Date)
 df <- df[!duplicated(df,by='Date'),]
 
