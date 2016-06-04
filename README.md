@@ -2,6 +2,8 @@
 
 ## app
 
+http://bit.ly/mnwd_forecast
+
 Data lives in the Dropbox and can be accessed locally or remotely.
 
 ### Local set up
