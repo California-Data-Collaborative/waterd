@@ -1,3 +1,5 @@
+library(forecast)
+
 # get environment
 ENV <- Sys.getenv("MNWD_ENV")
 
