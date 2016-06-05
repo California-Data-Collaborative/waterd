@@ -31,16 +31,13 @@ shinyServer(function(input, output) {
     x_today <- 
       1 + interval(TRAINING_DATA_START_DATE,Sys.Date())/dyears(1)
     
-    print(x_range_left)
-    print(x_range_right)
-    
     plot(forecast(model(),(input$nDays+days_since_training_end)/days_per_step)
          ,xlim=c(x_range_left,x_range_right)
          ,xlab="Year number since start of training data"
          ,ylab="Amount Delivered (mg)"
          )
     abline(v=x_today)
-    text(x=x_today,y=-5,label='today',adj = c(1.1,0))
+    text(x=x_today,y=par("usr")[3],label='today',adj = c(1.1,-2))
   })
   
   # Generate a summary of the data
