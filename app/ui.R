@@ -16,11 +16,17 @@ shinyUI(fluidPage(
                    choices = names(MODEL_LIST)),
       br(),
 
-            sliderInput("nDays", 
+      sliderInput("nDaysHist", 
+                  "Number of days of history", 
+                  value = 365*2,
+                  min = 1, 
+                  max = 365*13),
+      sliderInput("nDays", 
                   "Number of days to forecast", 
                   value = 365*1,
                   min = 1, 
-                  max = 365)
+                  max = 365*5)
+      
     ),
     
     # Show a tabset that includes a plot, summary, and table view
@@ -28,7 +34,7 @@ shinyUI(fluidPage(
     mainPanel(
       tabsetPanel(type = "tabs", 
                   tabPanel("Total usage forecast", plotOutput("totalUsage")), 
-                  tabPanel("Per customerUsage", verbatimTextOutput("perCustomerUsage"))
+                  tabPanel("Per customer usage", verbatimTextOutput("perCustomerUsage"))
       )
     )
   )
