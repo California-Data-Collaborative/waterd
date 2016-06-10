@@ -4,6 +4,7 @@ library(xts)
 library(forecast)
 
 source("app/common.R")
+source("app/dannySetup.R")
 
 # get the data
 df <- fread(PROD_CONS_TIME_SERIES_FILE)
@@ -68,3 +69,16 @@ dev.off()
 pdf(file.path(MODEL_DIR,"tbats_forecastt.pdf"))
 plot(forecast(model,5*365),xlab="Year number",ylab="Amount Delivered (mg)")
 dev.off()
+
+#
+# GLM for day of year and weather
+#
+model <- buildLinearModel(df)
+save(model,file=MODEL_LIST$linearModel$modelfile)
+
+
+
+
+
+
+
