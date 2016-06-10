@@ -24,7 +24,9 @@ MODEL_LIST <- list(tbats=list(modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rd
                    autoarima=list(modelfile=file.path(MODEL_DIR,"total_cons_autoarima.Rdata"),
                                   days_per_step=30.25),
                    ets=list(modelfile=file.path(MODEL_DIR,"total_cons_ets.Rdata"),
-                            days_per_step=30.25)
+                            days_per_step=30.25),
+                   Dannys_model=list(modelfile=file.path(MODEL_DIR,"total_cons_dannys_model.Rdata"),
+                              days_per_step=1)
 )
 TRAINING_DATA_START_DATE <- as.Date("2004-07-01")
 TRAINING_DATA_END_DATE <- as.Date("2015-12-31")
