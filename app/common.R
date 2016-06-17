@@ -3,7 +3,6 @@ library(lubridate)
 
 # get environment
 ENV <- Sys.getenv("MNWD_ENV")
-ENV <- "prod"
 
 # directories
 DATA_DIR <- Sys.getenv("MNWD_DATA_DIR")

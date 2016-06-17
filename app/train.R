@@ -74,7 +74,9 @@ dev.off()
 # GLM for day of year and weather
 #
 model <- buildLinearModel(df)
-save(model,file=MODEL_LIST$linearModel$modelfile)
+save(model,file=MODEL_LIST$linearmodel$modelfile)
+
+sqrt(mean((predict(model,newdf)-df$Amount_Delivered_mg)^2))
 
 
 
