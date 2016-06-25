@@ -28,11 +28,18 @@ shinyServer(function(input, output) {
       forecastOut <- forecast(modelObj,
                               steps_to_forecast,
                               level=input$confidenceLevel)
-      dateAxis <- yearsToDate(c(index(forecastOut$x),index(forecastOut$mean)))
-      plotdf <- data.table(date=dateAxis,
-                           mean=c(forecastOut$x,forecastOut$mean),
-                           upper=c(rep(NA,length(forecastOut$x)),forecastOut$upper),
-                           lower=c(rep(NA,length(forecastOut$x)),forecastOut$lower))
+
+      df1 <- data.table(date=yearsToDate(index(forecastOut$x)),
+                           mean=c(forecastOut$x),
+                           upper=NA,
+                           lower=NA)
+      df2 <- data.table(date=yearsToDate(index(forecastOut$mean)),
+                        mean=c(forecastOut$mean),
+                        upper=c(forecastOut$upper),
+                        lower=c(forecastOut$lower))
+      
+      plotdf <- rbind(df1,df2)
+      
     } else if (input$modelType == 'linearmodel') {
       
       trainDf <- getTrainingData()
@@ -41,11 +48,17 @@ shinyServer(function(input, output) {
                                  scoreDf,
                                  interval='predict',
                                  level=input$confidenceLevel/100))
-
-      plotdf <- data.table(date=c(trainDf$Date,scoreDf$Date),
-                           mean=c(trainDf$Amount_Delivered_mg,pred$fit),
-                           upper=c(rep(NA,length(trainDf$Amount_Delivered_mg)),pred$upr),
-                           lower=c(rep(NA,length(trainDf$Amount_Delivered_mg)),pred$lwr))
+      
+      df1 <- data.table(date=trainDf$Date,
+                        mean=trainDf$Amount_Delivered_mg,
+                        upper=NA,
+                        lower=NA)
+      df2 <- data.table(date=scoreDf$Date,
+                        mean=pred$fit,
+                        upper=pred$upr,
+                        lower=pred$lwr)
+      
+      plotdf <- rbind(df1,df2)
       
     }
     
