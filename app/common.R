@@ -1,5 +1,6 @@
 library(forecast)
 library(lubridate)
+library(data.table)
 
 # get environment
 ENV <- Sys.getenv("MNWD_ENV")
@@ -30,3 +31,9 @@ MODEL_LIST <- list(tbats=list(modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rd
 )
 TRAINING_DATA_START_DATE <- as.Date("2004-07-01")
 TRAINING_DATA_END_DATE <- as.Date("2015-12-31")
+
+
+
+yearsToDate <- function(x) {
+  TRAINING_DATA_START_DATE + dyears(x-1)
+}

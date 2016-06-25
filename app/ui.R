@@ -5,7 +5,7 @@ source("common.R")
 shinyUI(fluidPage(
   
   # Application title
-  titlePanel("Tabsets"),
+  titlePanel("Moulton Niguel Water District"),
   
   # Sidebar with controls to select the random distribution type
   # and number of observations to generate. Note the use of the
@@ -25,7 +25,13 @@ shinyUI(fluidPage(
                   "Number of days to forecast", 
                   value = 365*1,
                   min = 1, 
-                  max = 365*5)
+                  max = 365*5),
+      sliderInput("confidenceLevel", 
+                  "Confidence level", 
+                  value = 95,
+                  min = 1, 
+                  max = 99)
+      
       
     ),
     
@@ -33,8 +39,7 @@ shinyUI(fluidPage(
     # of the generated distribution
     mainPanel(
       tabsetPanel(type = "tabs", 
-                  tabPanel("Total usage forecast", plotOutput("totalUsage")), 
-                  tabPanel("Per customer usage", verbatimTextOutput("perCustomerUsage"))
+                  tabPanel("Total usage forecast", plotOutput("totalUsage"))
       )
     )
   )
