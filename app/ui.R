@@ -32,7 +32,6 @@ shinyUI(fluidPage(
                   min = 1, 
                   max = 99)
       
-      
     ),
     
     # Show a tabset that includes a plot, summary, and table view

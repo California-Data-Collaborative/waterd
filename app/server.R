@@ -16,20 +16,37 @@ shinyServer(function(input, output) {
     
     modelObj <- model()
     
+    days_per_step <- MODEL_LIST[input$modelType][[1]]$days_per_step
+    days_since_training_end <- 
+      1 + interval(TRAINING_DATA_END_DATE,Sys.Date())/ddays(1)
+    x_today <- 
+      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,Sys.Date())/dyears(1))
+    steps_to_forecast <- (input$nDays+days_since_training_end)/days_per_step
+    
     if (input$modelType %in% c('tbats','autoarima','ets')) {
       
-      days_per_step <- MODEL_LIST[input$modelType][[1]]$days_per_step
-      days_since_training_end <- 
-        1 + interval(TRAINING_DATA_END_DATE,Sys.Date())/ddays(1)
-      
       forecastOut <- forecast(modelObj,
-                              (input$nDays+days_since_training_end)/days_per_step,
+                              steps_to_forecast,
                               level=input$confidenceLevel)
       dateAxis <- yearsToDate(c(index(forecastOut$x),index(forecastOut$mean)))
       plotdf <- data.table(date=dateAxis,
                            mean=c(forecastOut$x,forecastOut$mean),
                            upper=c(rep(NA,length(forecastOut$x)),forecastOut$upper),
                            lower=c(rep(NA,length(forecastOut$x)),forecastOut$lower))
+    } else if (input$modelType == 'linearmodel') {
+      
+      trainDf <- getTrainingData()
+      scoreDf <- engineerFeatures(data.table(Date=seq(TRAINING_DATA_END_DATE+1,TRAINING_DATA_END_DATE+steps_to_forecast+1,'days')))
+      pred <- data.table(predict(modelObj,
+                                 scoreDf,
+                                 interval='predict',
+                                 level=input$confidenceLevel/100))
+
+      plotdf <- data.table(date=c(trainDf$Date,scoreDf$Date),
+                           mean=c(trainDf$Amount_Delivered_mg,pred$fit),
+                           upper=c(rep(NA,length(trainDf$Amount_Delivered_mg)),pred$upr),
+                           lower=c(rep(NA,length(trainDf$Amount_Delivered_mg)),pred$lwr))
+      
     }
     
     plotdf
