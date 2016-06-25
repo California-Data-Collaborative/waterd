@@ -30,9 +30,9 @@ shinyServer(function(input, output) {
                               level=input$confidenceLevel)
 
       df1 <- data.table(date=yearsToDate(index(forecastOut$x)),
-                           mean=c(forecastOut$x),
-                           upper=NA,
-                           lower=NA)
+                        mean=c(forecastOut$x),
+                        upper=NA,
+                        lower=NA)
       df2 <- data.table(date=yearsToDate(index(forecastOut$mean)),
                         mean=c(forecastOut$mean),
                         upper=c(forecastOut$upper),
