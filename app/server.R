@@ -54,7 +54,7 @@ shinyServer(function(input, output) {
     #text(x=x_today,y=par("usr")[3],label='today',adj = c(1.1,-2))
     
     ggplot(plotdf(), aes(date)) +
-      geom_ribbon(aes(ymin=lower,ymax=upper), fill = "grey70") +
+      geom_ribbon(aes(ymin=lower,ymax=upper), alpha = 0.3) +
       geom_line(aes(y=mean)) +
       labs(x = "Date", y="Amount Delivered (mg)") +
       xlim(c(x_range_left,x_range_right)) +
