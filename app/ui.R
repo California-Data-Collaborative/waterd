@@ -13,17 +13,18 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput("modelType", "Model type",
-                   choices = names(MODEL_LIST)),
+                  choices = names(MODEL_LIST),
+                  selected='linearmodel'),
       br(),
 
       sliderInput("nDaysHist", 
                   "Number of days of history", 
-                  value = 365*2,
+                  value = 15,
                   min = 1, 
                   max = 365*13),
       sliderInput("nDays", 
                   "Number of days to forecast", 
-                  value = 365*1,
+                  value = 15,
                   min = 1, 
                   max = 365*5),
       sliderInput("confidenceLevel", 

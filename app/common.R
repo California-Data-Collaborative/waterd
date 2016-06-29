@@ -1,6 +1,7 @@
 library(forecast)
 library(lubridate)
 library(data.table)
+library(gbm)
 
 # get environment
 ENV <- Sys.getenv("MNWD_ENV")
@@ -28,7 +29,13 @@ MODEL_LIST <- list(tbats=list(modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rd
 #                             days_per_step=30.25),
                    linearmodel=list(modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
                                     days_per_step=1,
-                                    use_weather=F)
+                                    use_weather=F),
+gbm=list(modelfile=file.path(MODEL_DIR,"total_cons_gbm.Rdata"),
+         days_per_step=1,
+         use_weather=F,
+         n.trees=1e4,
+         interaction.depth=2,
+         shrinkage=1e-3)
 )
 TRAINING_DATA_START_DATE <- as.Date("2004-07-01")
 TRAINING_DATA_END_DATE <- as.Date("2015-12-31")

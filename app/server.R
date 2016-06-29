@@ -60,7 +60,29 @@ shinyServer(function(input, output) {
       
       plotdf <- rbind(df1,df2)
       
+    } else if (input$modelType == 'gbm') {
+      
+      trainDf <- getTrainingData()
+      scoreDf <- engineerFeatures(data.table(Date=seq(TRAINING_DATA_END_DATE+1,TRAINING_DATA_END_DATE+steps_to_forecast+1,'days')))
+      pred <- data.table(fit=predict(modelObj,
+                                     scoreDf,
+                                     n.trees=MODEL_LIST[input$modelType][[1]]$n.trees))
+      
+      df1 <- data.table(date=trainDf$Date,
+                        mean=trainDf$Amount_Delivered_mg,
+                        upper=NA,
+                        lower=NA)
+      df2 <- data.table(date=scoreDf$Date,
+                        mean=pred$fit,
+                        upper=pred$fit,
+                        lower=pred$fit)
+      
+      plotdf <- rbind(df1,df2)
+      
+      print(plotdf)
+      
     }
+    
     
     plotdf
     

@@ -11,6 +11,7 @@ library(ggplot2)
 library(xts)
 library(forecast)
 library(weatherData)
+library(gbm)
 
 
 buildLinearModel <- function(df,use_weather=F) {
@@ -26,6 +27,27 @@ buildLinearModel <- function(df,use_weather=F) {
     
   return(model)
 }
+
+
+buildGBM <- function(df,use_weather=F) {
+  newdf <- engineerFeatures(df,use_weather=use_weather)
+  
+  if (use_weather) {
+    model <- gbm(Amount_Delivered_mg ~ factor(week_of_year) + factor(day_of_week) + TemperatureAvgF + PrecipitationSumIn, data=newdf)
+  } else {
+    model <- gbm(Amount_Delivered_mg ~ factor(week_of_year) + factor(day_of_week), 
+                 data=newdf,
+                 distribution='gaussian',
+                 n.trees=MODEL_LIST['gbm'][[1]]$n.trees,
+                 interaction.depth=MODEL_LIST['gbm'][[1]]$interaction.depth,
+                 shrinkage=MODEL_LIST['gbm'][[1]]$shrinkage)
+    # model <- lm(Amount_Delivered_mg ~ factor(day_of_week), data=newdf)
+    #model <- lm(Amount_Delivered_mg ~ factor(week_of_year), data=newdf)
+  }
+  
+  return(model)
+}
+
 
 scoreLinearModel <- function(df) {
   dateCutoff <- "2010-12-31"

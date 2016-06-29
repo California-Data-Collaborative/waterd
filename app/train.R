@@ -6,7 +6,7 @@ library(forecast)
 source("app/common.R")
 source("app/dannySetup.R")
 
-trainList <- c('linearmodel')
+trainList <- c('linearmodel','gbm')
 
 # get the data
 df <- getTrainingData()
@@ -83,6 +83,16 @@ if ("linearmodel" %in% trainList) {
   # sqrt(mean((predict(model,newdf)-df$Amount_Delivered_mg)^2))
 }
 
+
+#
+# GBM for day of year and weather
+#
+if ("gbm" %in% trainList) {
+  model <- buildGBM(df,use_weather=MODEL_LIST['gbm'][[1]]$use_weather)
+  save(model,file=MODEL_LIST$gbm$modelfile)
+  
+  # sqrt(mean((predict(model,newdf)-df$Amount_Delivered_mg)^2))
+}
 
 
 
