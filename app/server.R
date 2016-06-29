@@ -7,7 +7,7 @@ library(plyr)
 shinyServer(function(input, output) {
   
   model <- reactive({
-    modelfile <- MODEL_LIST[input$modelType][[1]]$modelfile
+    modelfile <- MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$modelfile
     load(modelfile)
     model
   })
@@ -16,14 +16,14 @@ shinyServer(function(input, output) {
     
     modelObj <- model()
     
-    days_per_step <- MODEL_LIST[input$modelType][[1]]$days_per_step
+    days_per_step <- MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$days_per_step
     days_since_training_end <- 
       1 + interval(TRAINING_DATA_END_DATE,Sys.Date())/ddays(1)
     x_today <- 
       yearsToDate(1 + interval(TRAINING_DATA_START_DATE,Sys.Date())/dyears(1))
     steps_to_forecast <- (input$nDays+days_since_training_end)/days_per_step
     
-    if (input$modelType %in% c('tbats','autoarima','ets')) {
+    if (MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$shortname %in% c('tbats','autoarima','ets')) {
       
       forecastOut <- forecast(modelObj,
                               steps_to_forecast,
@@ -40,7 +40,7 @@ shinyServer(function(input, output) {
       
       plotdf <- rbind(df1,df2)
       
-    } else if (input$modelType == 'linearmodel') {
+    } else if (MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$shortname == 'linearmodel') {
       
       trainDf <- getTrainingData()
       scoreDf <- engineerFeatures(data.table(Date=seq(TRAINING_DATA_END_DATE+1,TRAINING_DATA_END_DATE+steps_to_forecast+1,'days')))
@@ -60,13 +60,13 @@ shinyServer(function(input, output) {
       
       plotdf <- rbind(df1,df2)
       
-    } else if (input$modelType == 'gbm') {
+    } else if (MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$shortname == 'gbm') {
       
       trainDf <- getTrainingData()
       scoreDf <- engineerFeatures(data.table(Date=seq(TRAINING_DATA_END_DATE+1,TRAINING_DATA_END_DATE+steps_to_forecast+1,'days')))
       pred <- data.table(fit=predict(modelObj,
                                      scoreDf,
-                                     n.trees=MODEL_LIST[input$modelType][[1]]$n.trees))
+                                     n.trees=MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$n.trees))
       
       df1 <- data.table(date=trainDf$Date,
                         mean=trainDf$Amount_Delivered_mg,

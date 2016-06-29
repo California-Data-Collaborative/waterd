@@ -13,8 +13,8 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput("modelType", "Model type",
-                  choices = names(MODEL_LIST),
-                  selected='linearmodel'),
+                  choices = array(sapply(MODEL_LIST,function(x) {x$name})),
+                  selected='Linear regression'),
       br(),
 
       sliderInput("nDaysHist", 

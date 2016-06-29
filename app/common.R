@@ -21,22 +21,45 @@ dir.create(file.path(MODEL_DIR))
 PROD_CONS_TIME_SERIES_FILE <- file.path(DATA_DIR,'MNWD_RW_Production_and_Consumption_Time_Series.csv')
 
 # model list specification
-MODEL_LIST <- list(tbats=list(modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rdata"),
+MODEL_LIST <- list(tbats=list(shortname='tbats',
+                              name='TBATS pure time series',
+                              modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rdata"),
                               days_per_step=1),
-#                    autoarima=list(modelfile=file.path(MODEL_DIR,"total_cons_autoarima.Rdata"),
-#                                   days_per_step=30.25),
-#                    ets=list(modelfile=file.path(MODEL_DIR,"total_cons_ets.Rdata"),
-#                             days_per_step=30.25),
-                   linearmodel=list(modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
+                   linearmodel=list(shortname='linearmodel',
+                                    name='Linear regression',
+                                    modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
                                     days_per_step=1,
                                     use_weather=F),
-gbm=list(modelfile=file.path(MODEL_DIR,"total_cons_gbm.Rdata"),
-         days_per_step=1,
-         use_weather=F,
-         n.trees=1e4,
-         interaction.depth=2,
-         shrinkage=1e-3)
+                   gbm=list(shortname='gbm',
+                            name='Gradient boosted decision tree regression',
+                            modelfile=file.path(MODEL_DIR,"total_cons_gbm.Rdata"),
+                            days_per_step=1,
+                            use_weather=F,
+                            n.trees=1e4,
+                            interaction.depth=2,
+                            shrinkage=1e-3)
 )
+# MODEL_LIST <- data.table(shortname='tbats',
+#                          name='TBATS pure time series',
+#                          modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rdata"),
+#                          opts=list(days_per_step=1))
+# MODEL_LIST <- rbind(MODEL_LIST,
+#                     data.table(shortname='linearmodel',
+#                                name='Linear regression',
+#                                modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
+#                                opts=list(days_per_step=1,
+#                                          use_weather=F))
+# )
+# MODEL_LIST <- rbind(MODEL_LIST,
+#                     data.table(shortname='gbm',
+#                                name='Gradient boosted decision tree regression',
+#                                modelfile=file.path(MODEL_DIR,"total_cons_gbm.Rdata"),
+#                                opts=list(days_per_step=1,
+#                                          use_weather=F,
+#                                          n.trees=1e4,
+#                                          interaction.depth=2,
+#                                          shrinkage=1e-3))
+# )
 TRAINING_DATA_START_DATE <- as.Date("2004-07-01")
 TRAINING_DATA_END_DATE <- as.Date("2015-12-31")
 
