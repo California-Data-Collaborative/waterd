@@ -11,83 +11,41 @@ library(ggplot2)
 library(xts)
 library(forecast)
 library(weatherData)
+library(gbm)
 
 
-
-getDateNumber <- function(date) {
-    #dayIndex <- yday(date)
-    #dayOfWeek <- wday(date)
-    return(ceiling(yday(date)/7))
+buildLinearModel <- function(df,use_weather=F) {
+  newdf <- engineerFeatures(df,use_weather=use_weather)
+  
+  if (use_weather) {
+    model <- lm(Amount_Delivered_mg ~ factor(week_of_year) + factor(day_of_week) + TemperatureAvgF + PrecipitationSumIn, data=newdf)
+  } else {
+    model <- lm(Amount_Delivered_mg ~ factor(week_of_year) + factor(day_of_week), data=newdf)
+  # model <- lm(Amount_Delivered_mg ~ factor(day_of_week), data=newdf)
+  #model <- lm(Amount_Delivered_mg ~ factor(week_of_year), data=newdf)
+  }
+    
+  return(model)
 }
 
-engineerFeatures <- function(df) {
-  #df$Date <- as.Date(df$Date)
-  df$day_of_week <- weekdays(as.Date(df$Date))
-  df$number_of_weekday <- getDateNumber(df$Date)
+
+buildGBM <- function(df,use_weather=F) {
+  newdf <- engineerFeatures(df,use_weather=use_weather)
   
-  #newdf <- df[c("Date", "day_of_week", "number_of_weekday", "Amount_Delivered_mg")]
-  #newdf <- data.frame(df$Date, df$day_of_week, df$number_of_weekday, df$Amount_Delivered_mg)
-  
-  stationId <- "KCALAGUN9"
-  start <- "2006-06-26" # first available
-  weatherPredictor <- getSummarizedWeather(stationId,
-                                           station_type = "id",
-                                           start_date = start,
-                                           end_date = "2015-12-31", # do something reactive here (?)
-                                           opt_all_columns = TRUE
-                                           #opt_custom_columns = TRUE,
-                                           #custom_columns = c(2,3,4,16) #mean temp and precip -- maybe add humidity later
-  )
-  
-  weatherPredictor$Date <- as.Date(weatherPredictor$Date)
-  row.names(weatherPredictor) <- weatherPredictor$Date
-  
-  newdf <- merge(as.data.frame(df), as.data.frame(weatherPredictor), by = "Date")
-  
-  #add previous week's and previous month's average
-  newdf[,"previousWeekAvg"] <- NA
-  newdf[,"previousMonthAvg"] <- NA
-  
-  # very slow loop
-  for (rownum in 1:nrow(newdf)) {
-    currDate <- as.Date(newdf[rownum,"Date"])
-    dayOfWeek <- wday(currDate)
-    endOfPrevWeek <- currDate - dayOfWeek
-    startOfPrevWeek <- endOfPrevWeek - 6
-    
-    # go into df so that you get the averages for the first week
-    reldf <- df[df$Date >= startOfPrevWeek & df$Date <= endOfPrevWeek,] # ASK WILL WHY I NEED COMMA HERE AND NOT LATER
-    prevWeekAvg <- mean(reldf$Amount_Delivered_mg)
-    
-    newdf[rownum,"previousWeekAvg"] <- prevWeekAvg
-    
-    
-    dayOfMonth <- mday(currDate)
-    endOfPrevMonth <- currDate - dayOfMonth
-    startOfPrevMonth <- endOfPrevMonth - mday(endOfPrevMonth) + 1
-    
-    reldf <- df[df$Date >= startOfPrevMonth & df$Date <= endOfPrevMonth,]
-    prevMonthAvg <- mean(reldf$Amount_Delivered_mg)
-    
-    newdf[rownum,"previousMonthAvg"] <- prevMonthAvg
-    
+  if (use_weather) {
+    model <- gbm(Amount_Delivered_mg ~ factor(week_of_year) + factor(day_of_week) + TemperatureAvgF + PrecipitationSumIn, data=newdf)
+  } else {
+    model <- gbm(Amount_Delivered_mg ~ factor(week_of_year) + factor(day_of_week), 
+                 data=newdf,
+                 distribution='gaussian',
+                 n.trees=MODEL_LIST['gbm'][[1]]$n.trees,
+                 interaction.depth=MODEL_LIST['gbm'][[1]]$interaction.depth,
+                 shrinkage=MODEL_LIST['gbm'][[1]]$shrinkage)
+    # model <- lm(Amount_Delivered_mg ~ factor(day_of_week), data=newdf)
+    #model <- lm(Amount_Delivered_mg ~ factor(week_of_year), data=newdf)
   }
   
-  return(newdf)
-  
-}
-
-buildLinearModel <- function(df, endDate) {
-    
-    newdf <- engineerFeatures(df[df$Date <= as.Date(endDate),])
-
-    model <- glm(Amount_Delivered_mg ~ TemperatureAvgF + PrecipitationSumIn + HumidityAvg, data=newdf)
-    #model <- glm(Amount_Delivered_mg ~ factor(number_of_weekday) + factor(day_of_week) + TemperatureAvgF + PrecipitationSumIn + HumidityAvg, data=newdf)
-    #model <- glm(Amount_Delivered_mg ~ factor(number_of_weekday) + factor(day_of_week), data=newdf)
-    #model <- glm(Amount_Delivered_mg ~ factor(day_of_week), data=newdf)
-    #model <- glm(Amount_Delivered_mg ~ factor(number_of_weekday), data=newdf)
-
-    return(model)
+  return(model)
 }
 
 scoreLinearModel <- function(df) {

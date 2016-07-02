@@ -1,5 +1,9 @@
 library(forecast)
 library(lubridate)
+library(data.table)
+library(gbm)
+library(weatherData)
+
 
 # get environment
 ENV <- Sys.getenv("MNWD_ENV")
@@ -19,14 +23,129 @@ dir.create(file.path(MODEL_DIR))
 PROD_CONS_TIME_SERIES_FILE <- file.path(DATA_DIR,'MNWD_RW_Production_and_Consumption_Time_Series.csv')
 
 # model list specification
-MODEL_LIST <- list(tbats=list(modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rdata"),
-                                days_per_step=1),
-                   autoarima=list(modelfile=file.path(MODEL_DIR,"total_cons_autoarima.Rdata"),
-                                days_per_step=30.25),
-                   ets=list(modelfile=file.path(MODEL_DIR,"total_cons_ets.Rdata"),
-                                days_per_step=30.25),
-                   linearmodel=list(modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
-                                days_per_step=1)
+MODEL_LIST <- list(tbats=list(shortname='tbats',
+                              name='TBATS pure time series',
+                              modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rdata"),
+                              days_per_step=1),
+                   linearmodel=list(shortname='linearmodel',
+                                    name='Linear regression',
+                                    modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
+                                    days_per_step=1,
+                                    use_weather=T),
+                   gbm=list(shortname='gbm',
+                            name='Gradient boosted decision tree regression',
+                            modelfile=file.path(MODEL_DIR,"total_cons_gbm.Rdata"),
+                            days_per_step=1,
+                            use_weather=F,
+                            n.trees=1e4,
+                            interaction.depth=2,
+                            shrinkage=1e-3)
 )
+# MODEL_LIST <- data.table(shortname='tbats',
+#                          name='TBATS pure time series',
+#                          modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rdata"),
+#                          opts=list(days_per_step=1))
+# MODEL_LIST <- rbind(MODEL_LIST,
+#                     data.table(shortname='linearmodel',
+#                                name='Linear regression',
+#                                modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
+#                                opts=list(days_per_step=1,
+#                                          use_weather=F))
+# )
+# MODEL_LIST <- rbind(MODEL_LIST,
+#                     data.table(shortname='gbm',
+#                                name='Gradient boosted decision tree regression',
+#                                modelfile=file.path(MODEL_DIR,"total_cons_gbm.Rdata"),
+#                                opts=list(days_per_step=1,
+#                                          use_weather=F,
+#                                          n.trees=1e4,
+#                                          interaction.depth=2,
+#                                          shrinkage=1e-3))
+# )
 TRAINING_DATA_START_DATE <- as.Date("2004-07-01")
 TRAINING_DATA_END_DATE <- as.Date("2015-12-31")
+
+
+
+yearsToDate <- function(x) {
+  TRAINING_DATA_START_DATE + dyears(x-1)
+}
+
+getTrainingData <- function() {
+  df <- fread(PROD_CONS_TIME_SERIES_FILE)
+  setnames(df,gsub("[-(\\+)]","",gsub(" ","_",colnames(df))))
+  df$Date <- as.Date(df$Date)
+  df <- df[!duplicated(df,by='Date'),]
+  df
+}
+
+getDateNumber <- function(date) {
+  #dayIndex <- yday(date)
+  #dayOfWeek <- wday(date)
+  return(ceiling(yday(date)/7))
+}
+
+engineerFeatures <- function(df,use_weather=F) {
+  
+  newdf <- as.data.frame(df)
+  
+  #df$Date <- as.Date(df$Date)
+  newdf$day_of_week <- weekdays(as.Date(newdf$Date))
+  newdf$week_of_year <- getDateNumber(newdf$Date)
+  
+  #newdf <- df[c("Date", "day_of_week", "week_of_year", "Amount_Delivered_mg")]
+  #newdf <- data.frame(df$Date, df$day_of_week, df$week_of_year, df$Amount_Delivered_mg)
+  
+  #add previous week's and previous month's average
+  newdf[,"previousWeekAvg"] <- NA
+  newdf[,"previousMonthAvg"] <- NA
+  
+  # very slow loop
+  for (rownum in 1:nrow(newdf)) {
+    currDate <- as.Date(newdf[rownum,"Date"])
+    dayOfWeek <- wday(currDate)
+    endOfPrevWeek <- currDate - dayOfWeek
+    startOfPrevWeek <- endOfPrevWeek - 6
+    
+    # go into df so that you get the averages for the first week
+    reldf <- df[df$Date >= startOfPrevWeek & df$Date <= endOfPrevWeek,] # ASK WILL WHY I NEED COMMA HERE AND NOT LATER
+    prevWeekAvg <- mean(reldf$Amount_Delivered_mg)
+    
+    newdf[rownum,"previousWeekAvg"] <- prevWeekAvg
+    
+    
+    dayOfMonth <- mday(currDate)
+    endOfPrevMonth <- currDate - dayOfMonth
+    startOfPrevMonth <- endOfPrevMonth - mday(endOfPrevMonth) + 1
+    
+    reldf <- df[df$Date >= startOfPrevMonth & df$Date <= endOfPrevMonth,]
+    prevMonthAvg <- mean(reldf$Amount_Delivered_mg)
+    
+    newdf[rownum,"previousMonthAvg"] <- prevMonthAvg
+    
+  }
+  
+  if (use_weather) {
+    print("using weather")
+    stationId <- "KCALAGUN9"
+    start <- "2006-06-26" # first available
+    weatherPredictor <- getSummarizedWeather(stationId,
+                                             station_type = "id",
+                                             start_date = start,
+                                             end_date = "2015-12-31", # do something reactive here (?)
+                                             opt_all_columns = TRUE
+                                             #opt_custom_columns = TRUE,
+                                             #custom_columns = c(2,3,4,16) #mean temp and precip -- maybe add humidity later
+    )
+    
+    weatherPredictor$Date <- as.Date(weatherPredictor$Date)
+    row.names(weatherPredictor) <- weatherPredictor$Date
+    
+    newdf <- merge(newdf, as.data.frame(weatherPredictor), by = "Date")
+  } else {
+    print("not using weather")
+  }
+  
+  return(newdf)
+  
+}
