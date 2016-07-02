@@ -23,6 +23,8 @@ shinyServer(function(input, output) {
       yearsToDate(1 + interval(TRAINING_DATA_START_DATE,Sys.Date())/dyears(1))
     steps_to_forecast <- (input$nDays+days_since_training_end)/days_per_step
     
+    trainDf <- getTrainingData()
+
     if (MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$shortname %in% c('tbats','autoarima','ets')) {
       
       forecastOut <- forecast(modelObj,
@@ -42,7 +44,6 @@ shinyServer(function(input, output) {
       
     } else if (MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$shortname == 'linearmodel') {
       
-      trainDf <- getTrainingData()
       scoreDf <- engineerFeatures(data.table(Date=seq(TRAINING_DATA_END_DATE+1,TRAINING_DATA_END_DATE+steps_to_forecast+1,'days')))
       pred <- data.table(predict(modelObj,
                                  scoreDf,
@@ -62,7 +63,6 @@ shinyServer(function(input, output) {
       
     } else if (MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$shortname == 'gbm') {
       
-      trainDf <- getTrainingData()
       scoreDf <- engineerFeatures(data.table(Date=seq(TRAINING_DATA_END_DATE+1,TRAINING_DATA_END_DATE+steps_to_forecast+1,'days')))
       pred <- data.table(fit=predict(modelObj,
                                      scoreDf,
@@ -79,10 +79,11 @@ shinyServer(function(input, output) {
       
       plotdf <- rbind(df1,df2)
       
-      print(plotdf)
-      
     }
     
+    plotdf$max_daily = trainDf[Date > Sys.Date()-dyears(3),input$maxDailyPull+max(Amount_from__or_to__Storage_mg)]
+    
+    print(plotdf)
     
     plotdf
     
@@ -105,13 +106,23 @@ shinyServer(function(input, output) {
     #abline(v=x_today)
     #text(x=x_today,y=par("usr")[3],label='today',adj = c(1.1,-2))
     
-    ggplot(plotdf(), aes(date)) +
-      geom_ribbon(aes(ymin=lower,ymax=upper), alpha = 0.3) +
-      geom_line(aes(y=mean)) +
-      labs(x = "Date", y="Amount Delivered (mg)") +
-      xlim(c(x_range_left,x_range_right)) +
-      geom_vline(xintercept=as.numeric(x_today)) +
-      geom_text(data=data.table(date=x_today,mean=0),aes(date,mean),label="today",angle=90,vjust=-0.5)
+    maxDailyFlowStr <- 'Estimated max daily flow (RW + storage)'
+    consumptStr <- 'Total daily consumption'
+    
+    p <- ggplot(plotdf(), aes(date))
+    p <- p + geom_ribbon(aes(ymin=lower,ymax=upper), alpha = 0.3)
+    p <- p + geom_line(aes(y=mean,color='Total daily consumption'))
+    p <- p + geom_line(aes(y=max_daily,color='Estimated max daily flow (RW + storage)'))
+    p <- p + labs(x = "Date", y="Amount Delivered (mg)")
+    p <- p + xlim(c(x_range_left,x_range_right))
+    p <- p + geom_vline(xintercept=as.numeric(x_today))
+    p <- p + geom_text(data=data.table(date=x_today,mean=0),aes(date,mean),label="today",angle=90,vjust=-0.5,hjust=0)
+    p <- p + scale_colour_manual("", 
+                                 values = c('Total daily consumption' = "black",
+                                            'Estimated max daily flow (RW + storage)' = "red"))
+    
+    p
+    
   })
   
   

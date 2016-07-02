@@ -27,11 +27,16 @@ shinyUI(fluidPage(
                   value = 15,
                   min = 1, 
                   max = 365*5),
-      sliderInput("confidenceLevel", 
+      numericInput("confidenceLevel", 
                   "Confidence level", 
                   value = 95,
                   min = 1, 
-                  max = 99)
+                  max = 99),
+      numericInput("maxDailyPull", 
+                  "Max daily pull from storage (mg)", 
+                  value = 10,
+                  min = 0, 
+                  max = 100)
       
     ),
     

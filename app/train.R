@@ -6,7 +6,7 @@ library(forecast)
 source("app/common.R")
 source("app/dannySetup.R")
 
-trainList <- c('linearmodel','gbm')
+trainList <- c('linearmodel')
 
 # get the data
 df <- getTrainingData()

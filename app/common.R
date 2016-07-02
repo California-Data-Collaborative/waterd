@@ -2,6 +2,8 @@ library(forecast)
 library(lubridate)
 library(data.table)
 library(gbm)
+library(weatherData)
+
 
 # get environment
 ENV <- Sys.getenv("MNWD_ENV")
@@ -29,7 +31,7 @@ MODEL_LIST <- list(tbats=list(shortname='tbats',
                                     name='Linear regression',
                                     modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
                                     days_per_step=1,
-                                    use_weather=F),
+                                    use_weather=T),
                    gbm=list(shortname='gbm',
                             name='Gradient boosted decision tree regression',
                             modelfile=file.path(MODEL_DIR,"total_cons_gbm.Rdata"),
