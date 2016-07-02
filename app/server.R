@@ -111,15 +111,15 @@ shinyServer(function(input, output) {
     
     p <- ggplot(plotdf(), aes(date))
     p <- p + geom_ribbon(aes(ymin=lower,ymax=upper), alpha = 0.3)
-    p <- p + geom_line(aes(y=mean,color='Total daily consumption'))
-    p <- p + geom_line(aes(y=max_daily,color='Estimated max daily flow (RW + storage)'))
+    p <- p + geom_line(aes(y=mean,color='Total daily demand'))
+    p <- p + geom_line(aes(y=max_daily,color='Estimated max daily supply (RW + storage)'))
     p <- p + labs(x = "Date", y="Amount Delivered (mg)")
     p <- p + xlim(c(x_range_left,x_range_right))
     p <- p + geom_vline(xintercept=as.numeric(x_today))
     p <- p + geom_text(data=data.table(date=x_today,mean=0),aes(date,mean),label="today",angle=90,vjust=-0.5,hjust=0)
     p <- p + scale_colour_manual("", 
-                                 values = c('Total daily consumption' = "black",
-                                            'Estimated max daily flow (RW + storage)' = "red"))
+                                 values = c('Total daily demand' = "black",
+                                            'Estimated max daily supply (RW + storage)' = "red"))
     
     p
     
