@@ -113,8 +113,10 @@ shinyServer(function(input, output) {
     maxDailyFlowStr <- 'Estimated max daily flow (RW + storage)'
     consumptStr <- 'Total daily consumption'
     
+    waterColor <- 'royalblue4'
+    
     p <- ggplot(plotdf(), aes(date))
-    p <- p + geom_ribbon(aes(ymin=lower,ymax=upper), alpha = 0.2, fill='dodgerblue')
+    p <- p + geom_ribbon(aes(ymin=lower,ymax=upper), alpha = 0.2, fill=waterColor)
     p <- p + geom_line(aes(y=mean,color='Total daily demand'))
     p <- p + geom_line(aes(y=max_daily,color='Estimated max daily supply (RW + storage)'))
     p <- p + labs(x = "Date", y="Amount Delivered (mg)")
@@ -122,7 +124,7 @@ shinyServer(function(input, output) {
     p <- p + geom_vline(xintercept=as.numeric(x_today),color='gray50',linetype=2)
     p <- p + geom_text(data=data.table(date=x_today,mean=0),aes(date,mean),label="today",color='gray50',angle=90,vjust=-0.5,hjust=-0.5)
     p <- p + scale_colour_manual("Legend:", 
-                                 values = c('Total daily demand' = "dodgerblue4",
+                                 values = c('Total daily demand' = waterColor,
                                             'Estimated max daily supply (RW + storage)' = "red"))
     p <- p + theme_bw()
     p <- p + theme(legend.position="top",
