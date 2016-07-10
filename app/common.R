@@ -31,37 +31,18 @@ MODEL_LIST <- list(tbats=list(shortname='tbats',
                                     name='Linear regression',
                                     modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
                                     days_per_step=1,
-                                    use_weather=T),
+                                    use_weather=F,
+                                    use_prev_week_average=F),
                    gbm=list(shortname='gbm',
                             name='Gradient boosted decision tree regression',
                             modelfile=file.path(MODEL_DIR,"total_cons_gbm.Rdata"),
                             days_per_step=1,
-                            use_weather=F,
                             n.trees=1e4,
                             interaction.depth=2,
-                            shrinkage=1e-3)
+                            shrinkage=1e-3,
+                            use_weather=F,
+                            use_prev_week_average=F)
 )
-# MODEL_LIST <- data.table(shortname='tbats',
-#                          name='TBATS pure time series',
-#                          modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rdata"),
-#                          opts=list(days_per_step=1))
-# MODEL_LIST <- rbind(MODEL_LIST,
-#                     data.table(shortname='linearmodel',
-#                                name='Linear regression',
-#                                modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
-#                                opts=list(days_per_step=1,
-#                                          use_weather=F))
-# )
-# MODEL_LIST <- rbind(MODEL_LIST,
-#                     data.table(shortname='gbm',
-#                                name='Gradient boosted decision tree regression',
-#                                modelfile=file.path(MODEL_DIR,"total_cons_gbm.Rdata"),
-#                                opts=list(days_per_step=1,
-#                                          use_weather=F,
-#                                          n.trees=1e4,
-#                                          interaction.depth=2,
-#                                          shrinkage=1e-3))
-# )
 TRAINING_DATA_START_DATE <- as.Date("2004-07-01")
 TRAINING_DATA_END_DATE <- as.Date("2015-12-31")
 
@@ -85,7 +66,7 @@ getDateNumber <- function(date) {
   return(ceiling(yday(date)/7))
 }
 
-engineerFeatures <- function(df,use_weather=F) {
+engineerFeatures <- function(df,use_weather=F,use_prev_week_average=F) {
   
   newdf <- as.data.frame(df)
   
@@ -100,29 +81,34 @@ engineerFeatures <- function(df,use_weather=F) {
   newdf[,"previousWeekAvg"] <- NA
   newdf[,"previousMonthAvg"] <- NA
   
-  # very slow loop
-  for (rownum in 1:nrow(newdf)) {
-    currDate <- as.Date(newdf[rownum,"Date"])
-    dayOfWeek <- wday(currDate)
-    endOfPrevWeek <- currDate - dayOfWeek
-    startOfPrevWeek <- endOfPrevWeek - 6
-    
-    # go into df so that you get the averages for the first week
-    reldf <- df[df$Date >= startOfPrevWeek & df$Date <= endOfPrevWeek,] # ASK WILL WHY I NEED COMMA HERE AND NOT LATER
-    prevWeekAvg <- mean(reldf$Amount_Delivered_mg)
-    
-    newdf[rownum,"previousWeekAvg"] <- prevWeekAvg
-    
-    
-    dayOfMonth <- mday(currDate)
-    endOfPrevMonth <- currDate - dayOfMonth
-    startOfPrevMonth <- endOfPrevMonth - mday(endOfPrevMonth) + 1
-    
-    reldf <- df[df$Date >= startOfPrevMonth & df$Date <= endOfPrevMonth,]
-    prevMonthAvg <- mean(reldf$Amount_Delivered_mg)
-    
-    newdf[rownum,"previousMonthAvg"] <- prevMonthAvg
-    
+  if (use_prev_week_average) {
+    print("using previous week's average")
+    # very slow loop
+    for (rownum in 1:nrow(newdf)) {
+      currDate <- as.Date(newdf[rownum,"Date"])
+      dayOfWeek <- wday(currDate)
+      endOfPrevWeek <- currDate - dayOfWeek
+      startOfPrevWeek <- endOfPrevWeek - 6
+      
+      # go into df so that you get the averages for the first week
+      reldf <- df[df$Date >= startOfPrevWeek & df$Date <= endOfPrevWeek,] # ASK WILL WHY I NEED COMMA HERE AND NOT LATER
+      prevWeekAvg <- mean(reldf$Amount_Delivered_mg)
+      
+      newdf[rownum,"previousWeekAvg"] <- prevWeekAvg
+      
+      
+      dayOfMonth <- mday(currDate)
+      endOfPrevMonth <- currDate - dayOfMonth
+      startOfPrevMonth <- endOfPrevMonth - mday(endOfPrevMonth) + 1
+      
+      reldf <- df[df$Date >= startOfPrevMonth & df$Date <= endOfPrevMonth,]
+      prevMonthAvg <- mean(reldf$Amount_Delivered_mg)
+      
+      newdf[rownum,"previousMonthAvg"] <- prevMonthAvg
+      
+    }
+  } else {
+    print("not using previous week's average")
   }
   
   if (use_weather) {

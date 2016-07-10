@@ -91,12 +91,16 @@ shinyServer(function(input, output) {
   
   output$totalUsage <- renderPlot({
     
+    getTodayLocal <- function() {
+      as.Date(format(Sys.time(), format='%Y-%m-%d', tz="America/Los_Angeles"))
+    }
+    
     x_range_left <- 
-      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,Sys.Date()-ddays(input$nDaysHist))/dyears(1))
+      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal()-ddays(input$nDaysHist))/dyears(1))
     x_range_right <- 
-      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,Sys.Date()+ddays(input$nDays))/dyears(1))
+      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal()+ddays(input$nDays))/dyears(1))
     x_today <- 
-      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,Sys.Date())/dyears(1))
+      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal())/dyears(1))
     
     #plot(forecast(model(),(input$nDays+days_since_training_end)/days_per_step)
     #     ,xlim=c(x_range_left,x_range_right)
@@ -110,16 +114,19 @@ shinyServer(function(input, output) {
     consumptStr <- 'Total daily consumption'
     
     p <- ggplot(plotdf(), aes(date))
-    p <- p + geom_ribbon(aes(ymin=lower,ymax=upper), alpha = 0.3)
+    p <- p + geom_ribbon(aes(ymin=lower,ymax=upper), alpha = 0.2, fill='dodgerblue')
     p <- p + geom_line(aes(y=mean,color='Total daily demand'))
     p <- p + geom_line(aes(y=max_daily,color='Estimated max daily supply (RW + storage)'))
     p <- p + labs(x = "Date", y="Amount Delivered (mg)")
     p <- p + xlim(c(x_range_left,x_range_right))
-    p <- p + geom_vline(xintercept=as.numeric(x_today))
-    p <- p + geom_text(data=data.table(date=x_today,mean=0),aes(date,mean),label="today",angle=90,vjust=-0.5,hjust=0)
-    p <- p + scale_colour_manual("", 
-                                 values = c('Total daily demand' = "black",
+    p <- p + geom_vline(xintercept=as.numeric(x_today),color='gray50',linetype=2)
+    p <- p + geom_text(data=data.table(date=x_today,mean=0),aes(date,mean),label="today",color='gray50',angle=90,vjust=-0.5,hjust=-0.5)
+    p <- p + scale_colour_manual("Legend:", 
+                                 values = c('Total daily demand' = "dodgerblue4",
                                             'Estimated max daily supply (RW + storage)' = "red"))
+    p <- p + theme_bw()
+    p <- p + theme(legend.position="top",
+                   legend.background = element_rect(linetype="solid",color='gray80'))
     
     p
     
