@@ -10,10 +10,11 @@ shinyUI(
       "Commercial Water Supply and Demand",
       sidebarLayout(
         sidebarPanel(
+#           HTML('<style type="text/css">{font-type:serif}</style>'),
           selectInput(
             "modelType", "Model type",
             choices = array(sapply(MODEL_LIST,function(x) {x$name})),
-            selected='Linear regression'
+            selected='Linear regression',
           ),
           br(),
           
