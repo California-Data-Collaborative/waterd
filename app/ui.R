@@ -8,13 +8,13 @@ shinyUI(
     theme = "bootstrap.min.css",
     tabPanel(
       "Commercial Water Supply and Demand",
+      # style='font-family:"Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif',
       sidebarLayout(
         sidebarPanel(
-#           HTML('<style type="text/css">{font-type:serif}</style>'),
           selectInput(
             "modelType", "Model type",
             choices = array(sapply(MODEL_LIST,function(x) {x$name})),
-            selected='Linear regression',
+            selected='Linear regression'
           ),
           br(),
           
@@ -34,7 +34,7 @@ shinyUI(
           ),
           numericInput(
             "confidenceLevel", 
-            "Confidence level", 
+            "Confidence level (%)", 
             value = 95,
             min = 1, 
             max = 99

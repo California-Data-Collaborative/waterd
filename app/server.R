@@ -102,14 +102,6 @@ shinyServer(function(input, output) {
     x_today <- 
       yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal())/dyears(1))
     
-    #plot(forecast(model(),(input$nDays+days_since_training_end)/days_per_step)
-    #     ,xlim=c(x_range_left,x_range_right)
-    #    ,xlab="Year number since start of training data"
-    #     ,ylab="Amount Delivered (mg)"
-    #     )
-    #abline(v=x_today)
-    #text(x=x_today,y=par("usr")[3],label='today',adj = c(1.1,-2))
-    
     maxDailyFlowStr <- 'Estimated max daily flow (RW + storage)'
     consumptStr <- 'Total daily consumption'
     
