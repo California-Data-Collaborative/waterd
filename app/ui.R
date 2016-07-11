@@ -54,12 +54,21 @@ shinyUI(
     ),
     tabPanel(
       "About",
-      tags$p("This tool has been created in a partnership between the California Data Collaborative, the Moulton Niguel Water District and DataKind.")),
+      aboutCopy),
     footer=tags$div(
       style="width:100%; text-align:center",
-      tags$img(src="cdc.png",width=100,style='margin:50px'),
-      tags$img(src="1456792766-2552300-222x177-MNWD-LogoStacked-PMS.png",width=100,style='margin:50px'),
-      tags$img(src="2708040823-5.png",width=100,style='margin:50px')
+      tags$a(
+        href="http://californiadatacollaborative.com/",target="_blank",
+        tags$img(src="cdc.png",width=100,style='margin:50px')
+      ),
+      tags$a(
+        href="http://www.mnwd.com/",target="_blank",
+        tags$img(src="1456792766-2552300-222x177-MNWD-LogoStacked-PMS.png",width=100,style='margin:50px')
+      ),
+      tags$a(
+        href="http://www.datakind.org/",target="_blank",
+        tags$img(src="2708040823-5.png",width=100,style='margin:50px')
+      )
     )
   )
 )
