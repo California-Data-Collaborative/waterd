@@ -81,7 +81,7 @@ shinyServer(function(input, output) {
       
     }
     
-    plotdf$max_daily = trainDf[Date > Sys.Date()-dyears(3),input$maxDailyPull+max(Amount_from__or_to__Storage_mg)]
+    plotdf$max_daily = trainDf[Date > Sys.Date()-dyears(3),input$maxDailyPull+max(Amount_from__or_to__Storage_mg,na.rm=T)]
     
     print(plotdf)
     
