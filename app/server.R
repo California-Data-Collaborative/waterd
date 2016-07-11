@@ -113,7 +113,7 @@ shinyServer(function(input, output) {
     maxDailyFlowStr <- 'Estimated max daily flow (RW + storage)'
     consumptStr <- 'Total daily consumption'
     
-    waterColor <- 'royalblue4'
+    waterColor <- '#00406A'
     
     p <- ggplot(plotdf(), aes(date))
     p <- p + geom_ribbon(aes(ymin=lower,ymax=upper), alpha = 0.2, fill=waterColor)
