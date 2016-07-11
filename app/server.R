@@ -125,7 +125,7 @@ shinyServer(function(input, output) {
     p <- p + geom_text(data=data.table(date=x_today,mean=0),aes(date,mean),label="today",color='gray50',angle=90,vjust=-0.5,hjust=-0.5)
     p <- p + scale_colour_manual("Legend:", 
                                  values = c('Total daily demand' = waterColor,
-                                            'Estimated max daily supply (RW + storage)' = "red"))
+                                            'Estimated max daily supply (RW + storage)' = "#CE3D32"))
     p <- p + theme_bw()
     p <- p + theme(legend.position="top",
                    legend.background = element_rect(linetype="solid",color='gray80'))
