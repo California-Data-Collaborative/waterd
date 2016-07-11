@@ -54,7 +54,8 @@ shinyUI(
     ),
     tabPanel(
       "About",
-      aboutCopy),
+      uiOutput("aboutCopy")
+    ),
     footer=tags$div(
       style="width:100%; text-align:center",
       tags$a(

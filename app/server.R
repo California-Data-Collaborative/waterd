@@ -24,13 +24,13 @@ shinyServer(function(input, output) {
     steps_to_forecast <- (input$nDays+days_since_training_end)/days_per_step
     
     trainDf <- getTrainingData()
-
+    
     if (MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$shortname %in% c('tbats','autoarima','ets')) {
       
       forecastOut <- forecast(modelObj,
                               steps_to_forecast,
                               level=input$confidenceLevel)
-
+      
       df1 <- data.table(date=yearsToDate(index(forecastOut$x)),
                         mean=c(forecastOut$x),
                         upper=NA,
@@ -131,5 +131,29 @@ shinyServer(function(input, output) {
   output$perCustomerUsage <- renderPrint({
     
   })
+  
+  output$aboutCopy <- renderUI({
+    val <- tags$p("Faced with a historic drought and future uncertainty, California water managers need all 
+                      the tools they can get to ensure water reliability.  Short term demand forecasting has a long track 
+                      record of helping manage peak loads in energy, and this new tool created by ",
+                  tags$a(href="http://www.datakind.org/",target="_blank","DataKind"),
+                  " brings that 
+                      approach to help manage recycled water demand peak loads and reduce the need for potable makeup water 
+                      for irrigation watering.  That solves a key need for ",
+                  tags$a(href="http://www.mnwd.com/",target="_blank","Moulton Niguel Water District"),
+                  " in South Orange 
+                      County, which aside from recycled water, is 100% reliant on expensive imported water supplies and 
+                      serves as a leading example of how improved use of data can ensure water reliability with broader 
+                      statewide implications.  With more than a thousand water providers serving some 35 million 
+                      Californians, California's water world is three orders of magnitude more decentralized than energy 
+                      where 80% of Californians' electricity is supplied by three major utilities.  The ",
+                  tags$a(href="http://californiadatacollaborative.com/",target="_blank","California Data Collaborative"),
+                  " is a unique water manager led public private partnership bringing together utilities 
+                      together across the state to integrate data and deploy tools like this to help water managers ensure 
+                      reliability."
+    )
+    # val <- ""
+  })
+  
   
 })
