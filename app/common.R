@@ -44,7 +44,8 @@ MODEL_LIST <- list(tbats=list(shortname='tbats',
                             use_prev_week_average=F)
 )
 TRAINING_DATA_START_DATE <- as.Date("2004-07-01")
-TRAINING_DATA_END_DATE <- as.Date("2015-12-31")
+# TRAINING_DATA_END_DATE <- as.Date("2015-12-31")
+TRAINING_DATA_END_DATE <- as.Date("2016-05-01") # bad data from mid May
 
 
 
@@ -57,7 +58,7 @@ getTrainingData <- function() {
   setnames(df,gsub("[-(\\+)]","",gsub(" ","_",colnames(df))))
   df$Date <- as.Date(df$Date)
   df <- df[!duplicated(df,by='Date'),]
-  df
+  df[Date >= TRAINING_DATA_START_DATE & Date <= TRAINING_DATA_END_DATE,]
 }
 
 getDateNumber <- function(date) {

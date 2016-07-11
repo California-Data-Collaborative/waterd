@@ -46,7 +46,6 @@ shinyUI(
             min = 0, 
             max = 100
           )
-          
         ),
         mainPanel(
           plotOutput("totalUsage")
