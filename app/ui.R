@@ -7,7 +7,7 @@ shinyUI(
     "MNWD",
     theme = "bootstrap.min.css",
     tabPanel(
-      "Recycle water supply and demand",
+      "Recycled water supply and demand",
       # style='font-family:"Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif',
       sidebarLayout(
         sidebarPanel(
