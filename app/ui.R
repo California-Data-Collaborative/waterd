@@ -4,7 +4,7 @@ source("common.R")
 # Define UI for random distribution application 
 shinyUI(
   navbarPage(
-    "MNWD",
+    "Water Demand Forecaster",
     theme = "bootstrap.min.css",
     tabPanel(
       "Recycled water supply and demand",
