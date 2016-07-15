@@ -23,3 +23,7 @@ As `sudo su shiny`, add the following to ~/.Renviron.
 ### Promoting a model to production
 
 In local (test) mode your models should be pushed to `$MNWD_DATA_DIR/models/<username>`. To promote a model to produciton simply copy the model over to `$MNWD_DATA_DIR/models`, and make sure you add the needed metadata to the `MODEL_LIST` object in `app/common.R`.
+
+### Storage constraint math
+
+![Alt text](/math_picture/contraint_math.png?raw=true "Chris's storage math")
