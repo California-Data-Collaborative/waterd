@@ -26,4 +26,4 @@ In local (test) mode your models should be pushed to `$MNWD_DATA_DIR/models/<use
 
 ### Storage constraint math
 
-![Alt text](/<master>/math_picture/contraint_math.png?raw=true "Chris's storage math")
+![Alt text](/../<master>/math_picture/contraint_math.png?raw=true "Chris's storage math")
