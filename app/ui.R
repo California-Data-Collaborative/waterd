@@ -32,7 +32,7 @@ shinyUI(
             min = 1, 
             max = 365*5
           ),
-          numericInput(
+          sliderInput(
             "confidenceLevel", 
             "Forecast confidence band (%)", 
             value = 95,
@@ -53,7 +53,7 @@ shinyUI(
             min = 0, 
             max = 100
           ),
-          numericInput(
+          sliderInput(
             "excessProb", 
             "Demand excess probability limit (%)", 
             value = 50,
