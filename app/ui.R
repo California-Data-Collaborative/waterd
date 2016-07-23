@@ -22,7 +22,7 @@ shinyUI(
             "nDaysHist", 
             "Number of days of history", 
             value = 15,
-            min = 1, 
+            min = 0, 
             max = 365*13
           ),
           sliderInput(
@@ -34,7 +34,7 @@ shinyUI(
           ),
           numericInput(
             "confidenceLevel", 
-            "Confidence level (%)", 
+            "Forecast confidence band (%)", 
             value = 95,
             min = 1, 
             max = 99
@@ -52,10 +52,18 @@ shinyUI(
             value = 3,
             min = 0, 
             max = 100
+          ),
+          numericInput(
+            "excessProb", 
+            "Demand excess probability limit (%)", 
+            value = 50,
+            min = 1, 
+            max = 99
           )
         ),
         mainPanel(
-          plotOutput("totalUsage")
+          plotOutput("totalUsage"),
+          uiOutput("dailyExcess")
         )
       )
     ),

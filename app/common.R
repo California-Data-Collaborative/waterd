@@ -48,6 +48,9 @@ TRAINING_DATA_START_DATE <- as.Date("2004-07-01")
 TRAINING_DATA_END_DATE <- as.Date("2016-05-01") # bad data from mid May
 
 
+getTodayLocal <- function() {
+  as.Date(format(Sys.time(), format='%Y-%m-%d', tz="America/Los_Angeles"))
+}
 
 yearsToDate <- function(x) {
   TRAINING_DATA_START_DATE + dyears(x-1)

@@ -6,6 +6,16 @@ library(plyr)
 # Define server logic for random distribution application
 shinyServer(function(input, output) {
   
+  x_range_left <- reactive({
+    yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal()-ddays(input$nDaysHist))/dyears(1))
+  })
+  x_range_right <- reactive({
+    yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal()+ddays(input$nDays))/dyears(1))
+  })
+  x_today <- reactive({
+    yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal())/dyears(1))
+  })
+  
   model <- reactive({
     modelfile <- MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$modelfile
     load(modelfile)
@@ -19,8 +29,8 @@ shinyServer(function(input, output) {
     days_per_step <- MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$days_per_step
     days_since_training_end <- 
       1 + interval(TRAINING_DATA_END_DATE,Sys.Date())/ddays(1)
-    x_today <- 
-      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,Sys.Date())/dyears(1))
+#     x_today <- 
+#       yearsToDate(1 + interval(TRAINING_DATA_START_DATE,Sys.Date())/dyears(1))
     steps_to_forecast <- (input$nDays+days_since_training_end)/days_per_step
     
     trainDf <- getTrainingData()
@@ -30,15 +40,20 @@ shinyServer(function(input, output) {
       forecastOut <- forecast(modelObj,
                               steps_to_forecast,
                               level=input$confidenceLevel)
+      predStd <- forecast(modelObj,
+                          steps_to_forecast,
+                          level=(pnorm(1,0,1)-pnorm(-1,0,1))*100)
       
       df1 <- data.table(date=yearsToDate(index(forecastOut$x)),
                         mean=c(forecastOut$x),
                         upper=NA,
-                        lower=NA)
+                        lower=NA,
+                        sigma=NA)
       df2 <- data.table(date=yearsToDate(index(forecastOut$mean)),
                         mean=c(forecastOut$mean),
                         upper=c(forecastOut$upper),
-                        lower=c(forecastOut$lower))
+                        lower=c(forecastOut$lower),
+                        sigma=c(predStd$upper-forecastOut$mean))
       
       plotdf <- rbind(df1,df2)
       
@@ -49,15 +64,22 @@ shinyServer(function(input, output) {
                                  scoreDf,
                                  interval='predict',
                                  level=input$confidenceLevel/100))
+      # get sigma
+      predStd <- data.table(predict(modelObj,
+                                    scoreDf,
+                                    interval='predict',
+                                    level=(pnorm(1,0,1)-pnorm(-1,0,1))))
       
       df1 <- data.table(date=trainDf$Date,
                         mean=trainDf$Amount_Delivered_mg,
                         upper=NA,
-                        lower=NA)
+                        lower=NA,
+                        sigma=NA)
       df2 <- data.table(date=scoreDf$Date,
                         mean=pred$fit,
                         upper=pred$upr,
-                        lower=pred$lwr)
+                        lower=pred$lwr,
+                        sigma=predStd$upr-predStd$fit)
       
       plotdf <- rbind(df1,df2)
       
@@ -92,17 +114,6 @@ shinyServer(function(input, output) {
   
   output$totalUsage <- renderPlot({
     
-    getTodayLocal <- function() {
-      as.Date(format(Sys.time(), format='%Y-%m-%d', tz="America/Los_Angeles"))
-    }
-    
-    x_range_left <- 
-      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal()-ddays(input$nDaysHist))/dyears(1))
-    x_range_right <- 
-      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal()+ddays(input$nDays))/dyears(1))
-    x_today <- 
-      yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal())/dyears(1))
-    
     maxDailyFlowStr <- 'Estimated max daily flow (RW + storage)'
     consumptStr <- 'Total daily consumption'
     
@@ -113,9 +124,9 @@ shinyServer(function(input, output) {
     p <- p + geom_line(aes(y=mean,color='Total daily demand'))
     p <- p + geom_line(aes(y=max_daily,color='Estimated max daily supply (RW + storage)'))
     p <- p + labs(x = "Date", y="Amount Delivered (mg)")
-    p <- p + xlim(c(x_range_left,x_range_right))
-    p <- p + geom_vline(xintercept=as.numeric(x_today),color='gray50',linetype=2)
-    p <- p + geom_text(data=data.table(date=x_today,mean=0),aes(date,mean),label="today",color='gray50',angle=90,vjust=-0.5,hjust=-0.5)
+    p <- p + xlim(c(x_range_left(),x_range_right()))
+    p <- p + geom_vline(xintercept=as.numeric(x_today()),color='gray50',linetype=2)
+    p <- p + geom_text(data=data.table(date=x_today(),mean=0),aes(date,mean),label="today",color='gray50',angle=90,vjust=-0.5,hjust=-0.5)
     p <- p + scale_colour_manual("Legend:", 
                                  values = c('Total daily demand' = waterColor,
                                             'Estimated max daily supply (RW + storage)' = "#CE3D32"))
@@ -127,6 +138,40 @@ shinyServer(function(input, output) {
     
   })
   
+  output$dailyExcess <- renderUI({
+    excessNDays <- 0
+
+    df <- plotdf()[date >= x_today() & date <= x_range_right(),]
+
+    # http://stats.stackexchange.com/questions/9510/probability-distribution-for-different-probabilities
+    # For N Bernoulli trials with *different probabilities p_i*, for N large and p_i never too small,
+    # the distribution of n successes is normal with mean = sum(p_i) and variance 
+    # sigma^2 = sum(p_i*(1-p_i)).
+    # Trial i = day
+    # N = number of days from now to the end of the forecast period
+    # p_i = chance of exceeding the max daily supply
+    # Assumptions: 
+    #  - normally distributed model errors in daily forecast values
+    #  - model errors are uncorrelated across days
+    #  - p_i never too small
+    #  - N large enough to apply central limit theorem
+    df[,prob_exceeding:=1-pnorm(max_daily,mean,sigma)]
+    excessNDaysMu <- df[,sum(prob_exceeding)]
+    excessNDaysSigma <- sqrt(df[,sum(prob_exceeding*(1-prob_exceeding))])
+    excessNDays <- max(qnorm(1-input$excessProb/100,excessNDaysMu,excessNDaysSigma),0)
+    
+    calloutStyle <- "text-align:center;font-weight:bold;font-size:150%;color:#CE3D32;padding:10px"
+
+    tagList(
+      tags$p(style="margin-top:50px",
+        "Between today and ",x_range_right(),", ",
+        " there is a ",
+        tags$div(format(input$excessProb,digits=2)," percent chance",style=calloutStyle),
+        " demand will exceed supply for ",
+        tags$div("at least ",round(excessNDays)," days.",style=calloutStyle)
+      )
+    )
+  })
   
   # Generate a summary of the data
   output$perCustomerUsage <- renderPrint({
@@ -155,7 +200,6 @@ shinyServer(function(input, output) {
                       together across the state to integrate data and deploy tools like this to help water managers ensure 
                       reliability."
     )
-    # val <- ""
   })
   
   
