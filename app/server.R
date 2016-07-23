@@ -139,9 +139,21 @@ shinyServer(function(input, output) {
   })
   
   output$dailyExcess <- renderUI({
-    excessNDays <- 0
-
+    calloutStyle <- "text-align:center;font-weight:bold;font-size:150%;color:#CE3D32;padding:10px"
+    style <- "margin-top:50px"
+    
     df <- plotdf()[date >= x_today() & date <= x_range_right(),]
+    
+    if (!("sigma" %in% colnames(df))) {
+      return(
+        tagList(
+          tags$p(style=style,
+            input$modelType,
+            " does not yet support confidence intervals."
+          )
+        )
+      )
+    }
 
     # http://stats.stackexchange.com/questions/9510/probability-distribution-for-different-probabilities
     # For N Bernoulli trials with *different probabilities p_i*, for N large and p_i never too small,
@@ -160,10 +172,8 @@ shinyServer(function(input, output) {
     excessNDaysSigma <- sqrt(df[,sum(prob_exceeding*(1-prob_exceeding))])
     excessNDays <- max(qnorm(1-input$excessProb/100,excessNDaysMu,excessNDaysSigma),0)
     
-    calloutStyle <- "text-align:center;font-weight:bold;font-size:150%;color:#CE3D32;padding:10px"
-
     tagList(
-      tags$p(style="margin-top:50px",
+      tags$p(style=style,
         "Between today and ",x_range_right(),", ",
         " there is a ",
         tags$div(format(input$excessProb,digits=2)," percent chance",style=calloutStyle),
