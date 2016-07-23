@@ -41,8 +41,15 @@ shinyUI(
           ),
           numericInput(
             "maxDailyPull", 
-            "Max daily pull from storage (mg)", 
+            "Max daily recycled water supply (mg)", 
             value = 10,
+            min = 0, 
+            max = 100
+          ),
+          numericInput(
+            "maxDailyStorage", 
+            "Max daily storage supply (mg)", 
+            value = 3,
             min = 0, 
             max = 100
           )
