@@ -174,7 +174,7 @@ shinyServer(function(input, output) {
     
     tagList(
       tags$p(style=style,
-        "Between today and ",x_range_right(),", ",
+        "Between today and ",x_range_right(),
         " there is a ",
         tags$div(format(input$excessProb,digits=2)," percent chance",style=calloutStyle),
         " demand will exceed supply for ",
