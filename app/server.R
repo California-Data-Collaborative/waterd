@@ -137,7 +137,9 @@ shinyServer(function(input, output) {
                       the tools they can get to ensure water reliability.  Short term demand forecasting has a long track 
                       record of helping manage peak loads in energy, and this new tool created by ",
                   tags$a(href="http://www.datakind.org/",target="_blank","DataKind"),
-                  " brings that 
+                  ", sponsored by ",
+                  tags$a(href="http://www.bloomberg.com/",target="_blank","Bloomberg"),
+                  ", brings that 
                       approach to help manage recycled water demand peak loads and reduce the need for potable makeup water 
                       for irrigation watering.  That solves a key need for ",
                   tags$a(href="http://www.mnwd.com/",target="_blank","Moulton Niguel Water District"),
