@@ -16,10 +16,6 @@ shinyServer(function(input, output) {
     yearsToDate(1 + interval(TRAINING_DATA_START_DATE,getTodayLocal())/dyears(1))
   })
   
-  excess_expected_value_integrand <- function(x,mean,sd) {
-    x*dnorm(x,mean,sd)
-  }
-  
   model <- reactive({
     modelfile <- MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$modelfile
     load(modelfile)
@@ -33,8 +29,6 @@ shinyServer(function(input, output) {
     days_per_step <- MODEL_LIST[grep(input$modelType,MODEL_LIST)][[1]]$days_per_step
     days_since_training_end <- 
       1 + interval(TRAINING_DATA_END_DATE,Sys.Date())/ddays(1)
-#     x_today <- 
-#       yearsToDate(1 + interval(TRAINING_DATA_START_DATE,Sys.Date())/dyears(1))
     steps_to_forecast <- (input$nDays+days_since_training_end)/days_per_step
     
     trainDf <- getTrainingData()
@@ -172,16 +166,11 @@ shinyServer(function(input, output) {
     #  - p_i never too small
     #  - N large enough to apply central limit theorem
     df[,prob_exceeding:=1-pnorm(max_daily,mean,sigma)]
-    df$mg_exceeding = -1
-    for (i in 1:nrow(df)) {
-      df[i,]$mg_exceeding <- integrate(excess_expected_value_integrand,df[i,]$max_daily,Inf,df[i,]$mean,df[i,]$sigma)$value/df[i,]$prob_exceeding - df[i,]$max_daily
-    }
-    print(df)
-    
     excessNDaysMu <- df[,sum(prob_exceeding)]
     excessNDaysSigma <- sqrt(df[,sum(prob_exceeding*(1-prob_exceeding))])
     excessNDays <- max(qnorm(1-input$excessProb/100,excessNDaysMu,excessNDaysSigma),0)
     
+    df[,mg_exceeding:=integrate_func(max_daily,mean,sigma)/prob_exceeding - max_daily]
     excessMGMu <- df[,sum(prob_exceeding*mg_exceeding)]
     excessMGSigma <- sqrt(df[,sum(prob_exceeding*(1-prob_exceeding)*mg_exceeding^2)])
     excessMGDays <- max(qnorm(1-input$excessProb/100,excessMGMu,excessMGSigma),0)

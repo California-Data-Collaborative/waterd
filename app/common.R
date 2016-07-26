@@ -146,3 +146,15 @@ engineerFeatures <- function(df,use_weather=F,use_prev_week_average=F) {
 remove_null <- function(x) {
   x[!sapply(x, is.null)]
 }
+
+excess_expected_value_integrand <- function(x,mean,sd) {
+  x*dnorm(x,mean,sd)
+}
+
+integrate_func <- function(max_daily,mean,sigma) {
+  val <- rep(NA,length(max_daily))
+  for (i in 1:length(val)) {
+    val[i]<-integrate(excess_expected_value_integrand,max_daily[i],Inf,mean[i],sigma[i])$value
+  }
+  val
+}
