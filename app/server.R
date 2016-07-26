@@ -174,9 +174,10 @@ shinyServer(function(input, output) {
     df[,prob_exceeding:=1-pnorm(max_daily,mean,sigma)]
     df$mg_exceeding = -1
     for (i in 1:nrow(df)) {
-      df[i,]$mg_exceeding <- integrate(excess_expected_value_integrand,df[i,]$max_daily,Inf,df[i,]$mean,df[i,]$sigma)$value
+      df[i,]$mg_exceeding <- integrate(excess_expected_value_integrand,df[i,]$max_daily,Inf,df[i,]$mean,df[i,]$sigma)$value/df[i,]$prob_exceeding - df[i,]$max_daily
     }
     print(df)
+    
     excessNDaysMu <- df[,sum(prob_exceeding)]
     excessNDaysSigma <- sqrt(df[,sum(prob_exceeding*(1-prob_exceeding))])
     excessNDays <- max(qnorm(1-input$excessProb/100,excessNDaysMu,excessNDaysSigma),0)
