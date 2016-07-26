@@ -13,7 +13,7 @@ shinyUI(
         sidebarPanel(
           selectInput(
             "modelType", "Model type",
-            choices = array(sapply(MODEL_LIST,function(x) {x$name})),
+            choices = remove_null(array(sapply(MODEL_LIST,function(x) {if (x$is_active) {x$name}}))),
             selected='Linear regression'
           ),
           br(),

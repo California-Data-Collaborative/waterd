@@ -25,16 +25,19 @@ PROD_CONS_TIME_SERIES_FILE <- file.path(DATA_DIR,'MNWD_RW_Production_and_Consump
 # model list specification
 MODEL_LIST <- list(tbats=list(shortname='tbats',
                               name='TBATS pure time series',
+                              is_active=FALSE,
                               modelfile=file.path(MODEL_DIR,"total_cons_tbats.Rdata"),
                               days_per_step=1),
                    linearmodel=list(shortname='linearmodel',
                                     name='Linear regression',
+                                    is_active=TRUE,
                                     modelfile=file.path(MODEL_DIR,"total_cons_linearmodel.Rdata"),
                                     days_per_step=1,
                                     use_weather=F,
                                     use_prev_week_average=F),
                    gbm=list(shortname='gbm',
                             name='Gradient boosted decision tree regression',
+                            is_active=TRUE,
                             modelfile=file.path(MODEL_DIR,"total_cons_gbm.Rdata"),
                             days_per_step=1,
                             n.trees=1e4,
@@ -140,3 +143,6 @@ engineerFeatures <- function(df,use_weather=F,use_prev_week_average=F) {
   
 }
 
+remove_null <- function(x) {
+  x[!sapply(x, is.null)]
+}

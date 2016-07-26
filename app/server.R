@@ -186,6 +186,9 @@ shinyServer(function(input, output) {
     excessMGSigma <- sqrt(df[,sum(prob_exceeding*(1-prob_exceeding)*mg_exceeding^2)])
     excessMGDays <- max(qnorm(1-input$excessProb/100,excessMGMu,excessMGSigma),0)
     
+    print(excessNDays)
+    print(excessMGDays)
+    
     tagList(
       tags$p(style=style,
         "Between today and ",x_range_right(),
