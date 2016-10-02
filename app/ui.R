@@ -83,7 +83,7 @@ shinyUI(
       ),
       tags$a(
         href="http://www.datakind.org/",target="_blank",
-        tags$img(src="2708040823-5.png",width=100,style='margin:50px')
+        tags$img(src="DataKind_orange.png",width=100,style='margin:50px')
       ),
       tags$a(
         href="http://www.bloomberg.com/",target="_blank",
